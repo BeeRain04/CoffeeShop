@@ -23,13 +23,18 @@ import ReportManagement from "./Components/ReportManagement/ReportManagement";
 import RevenueReport from './Components/RevenueReport/RevenueReport';
 import InventoryReport from './Components/InventoryReport/InventoryReport';
 import BestSellingReport from './Components/BestSellingReport/BestSellingReport';
-
+import ProductDetail from "./Components/ProductDetail/ProductDetail";
+import Cart from "./Components/Cart/CartPage";
+import Checkout from "./Components/Checkout/Checkout";
+import PaymentResult from "./Components/Checkout/PaymentResult";
+import { HelmetProvider } from "react-helmet-async";
 
 
 
 function App() {
   return (
-    <Router>
+    <HelmetProvider>
+      <Router>
       <NavBar />
       <div className="App">
         <Routes>
@@ -67,11 +72,19 @@ function App() {
           <Route path="/report" element={<ReportManagement />} />    
           <Route path="/revenue" element={<RevenueReport />} />          
           <Route path="/inventoryreport" element={<InventoryReport />} />          
-          <Route path="/best-selling" element={<BestSellingReport />} />          
+          <Route path="/best-selling" element={<BestSellingReport />} />    
 
+          {/*Router của bên client*/}      
+          <Route path="/product/:productId" element={<ProductDetail />} />
+          {/*Route của cart*/}
+          <Route path="/cart" element={<Cart/>}/>
+          {/*Route của thanh toán*/}
+          <Route path="/checkout" element={<Checkout/>}/>
+          <Route path="/paymentresult" element={<PaymentResult/>}/>
         </Routes>
       </div>
     </Router>
+    </HelmetProvider>
   );
 }
 

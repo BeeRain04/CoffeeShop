@@ -110,7 +110,14 @@ router.get('/', async (req, res) => {
 // Lấy chi tiết sản phẩm theo productId
 router.get('/:id', async (req, res) => {
     try {
-        const product = await Product.findOne({ productId: req.params.id })
+        const { id } = req.params;
+        console.log('Received Product ID:', id);
+
+        // Kiểm tra nếu id hợp lệ là ObjectId hay không
+        const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
+        const query = isValidObjectId ? { _id: id } : { productId: id };
+
+        const product = await Product.findOne(query)
             .populate('categoryId', 'name')
             .populate('ingredients.inventoryId', 'name unit');
 
@@ -130,7 +137,7 @@ router.get('/:id', async (req, res) => {
         res.status(200).json(response);
     } catch (error) {
         console.error('Error fetching product:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: 'Internal Server Error', details: error.message });
     }
 });
 

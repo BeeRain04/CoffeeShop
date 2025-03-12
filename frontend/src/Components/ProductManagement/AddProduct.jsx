@@ -65,11 +65,12 @@ const AddProduct = () => {
     e.preventDefault();
     
     // Ràng buộc tên sản phẩm không có ký tự đặc biệt
-    const productNameRegex = /^[a-zA-Z0-9 ]+$/; // Chỉ cho phép chữ cái, số và khoảng trắng
+    const productNameRegex = /^[\p{L}\p{N} .,()-]+$/u; // Hỗ trợ tiếng Việt và một số ký tự
     if (!productNameRegex.test(productName)) {
-      setError('Tên sản phẩm không được chứa ký tự đặc biệt.');
+      setError('Tên sản phẩm không hợp lệ. Chỉ cho phép chữ, số, dấu cách và các ký tự: .,()-');
       return;
     }
+
 
     // Ràng buộc giá
     if (isNaN(price) || price <= 0 || price > 1000000) {

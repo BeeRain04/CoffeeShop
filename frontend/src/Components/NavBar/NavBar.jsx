@@ -1,37 +1,45 @@
 import { Link, useNavigate } from "react-router-dom";
-import "./navbar.css";
 import { useSelector, useDispatch } from "react-redux";
 import { logOut } from "../../redux/apiRequest.js";
 import { createAxios } from "../../createInstance";
 import { logOutSuccess } from "../../redux/authSlice";
-import { FaCoffee } from 'react-icons/fa';
+import { FaCoffee, FaShoppingCart } from 'react-icons/fa';
+import { clearCart } from "../../redux/cartSlice";
+import "./navbar.css";
 
 const NavBar = () => {
   const user = useSelector((state) => state.auth.login.currentUser);
-  console.log(user); // Kiểm tra xem user có giá trị đúng không
-  const accessToken = user?.accessToken;
-  const id = user?._id;
+  const totalQuantity = useSelector((state) => state.cart.totalQuantity) ?? 0;
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const accessToken = user?.accessToken;
+  const id = user?._id;
   let axiosJWT = createAxios(user, dispatch, logOutSuccess);
 
   const handleLogout = () => {
+    if (!user) return; // ✅ Ngăn lỗi nếu user chưa đăng nhập
     logOut(dispatch, id, navigate, accessToken, axiosJWT);
-    navigate("/login");  // Chuyển hướng đến trang đăng nhập sau khi đăng xuất
+    dispatch(clearCart());
+    navigate("/login");
   };
 
   return (
     <nav className="navbar-container">
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo">
+        <Link to="/home" className="navbar-logo">
           <FaCoffee className="coffee-icon" />
           <span>Coffee Shop</span>
         </Link>
-        {user && (
-          <p className="navbar-user">Hi, <span>{user.username}</span></p> // Hiển thị tên người dùng
-        )}
+        {user && <p className="navbar-user">Hi, <span>{user.username}</span></p>}
       </div>
       <div className="navbar-right">
+        <div className="navbar-cart">
+          <Link to="/cart">
+            <FaShoppingCart className="cart-icon" />
+            {totalQuantity > 0 && <span className="cart-count">{totalQuantity}</span>}
+          </Link>
+        </div>
         {user ? (
           <button className="navbar-logout" onClick={handleLogout}>Log out</button>
         ) : (
