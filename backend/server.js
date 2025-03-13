@@ -1,5 +1,3 @@
-// server.js
-
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -13,16 +11,12 @@ const productRoute = require('./routes/product');
 const orderRoute = require('./routes/order');
 const customersRoute = require('./routes/customer');
 const reportRoutes = require('./routes/report');
-
-
+const paymentRoute = require('./routes/vnpayRoutes');
 
 dotenv.config();
 const app = express();
 const uri = process.env.MONGO_URI;
-const PORT = process.env.PORT; 
-
-
-
+const PORT = process.env.PORT || 8000; // Đặt cổng mặc định là 8000 nếu chưa có
 
 async function connectToDB() {
     try {
@@ -32,7 +26,6 @@ async function connectToDB() {
         console.error('MongoDB connection error:', err);
     }
 }
-
 
 connectToDB();
 
@@ -51,10 +44,14 @@ app.use("/v1/categories", categoryRoute);
 app.use("/v1/inventory", inventoryRoute);
 app.use("/v1/products", productRoute);
 app.use("/v1/order", orderRoute);
-app.use("/v1/customer",customersRoute);
+app.use("/v1/customer", customersRoute);
 app.use("/v1/report", reportRoutes);
+app.use("/v1/payment", paymentRoute);
 
-
+// ✅ Thêm route cho "/"
+app.get("/", (req, res) => {
+    res.send("API is running 🚀");
+});
 
 // Middleware xử lý lỗi
 app.use((err, req, res, next) => {
@@ -64,7 +61,6 @@ app.use((err, req, res, next) => {
         error: process.env.NODE_ENV === 'development' ? err : {} 
     });
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

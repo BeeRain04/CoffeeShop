@@ -106,7 +106,22 @@ router.get("/", async (req, res) => {
         const orders = await Order.find()
             .populate("customerId", "name")
             .populate("items.productId", "name price");
-        res.status(200).json(orders);
+
+        const formattedOrders = orders.map(order => ({
+            orderId: order.orderId,
+            customer: order.customerId.name,
+            totalAmount: order.totalAmount,
+            status: order.status,
+            paymentMethod: order.paymentMethod,
+            isPaid: order.isPaid ? "Đã thanh toán" : "Chưa thanh toán", // Hiển thị trạng thái thanh toán
+            items: order.items.map(item => ({
+                product: item.productId.name,
+                quantity: item.quantity,
+                price: item.productId.price
+            }))
+        }));
+
+        res.status(200).json(formattedOrders);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -226,6 +241,29 @@ router.delete("/:id", async (req, res) => {
         }
 
         res.status(200).json({ message: `Đã xóa đơn hàng ${id} thành công` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+router.put("/:id/pay", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Tìm và cập nhật trạng thái thanh toán
+        const updatedOrder = await Order.findOneAndUpdate(
+            { orderId: id },
+            { status: "Đã thanh toán", isPaid: true },
+            { new: true }
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).json({ message: "Đơn hàng không tồn tại" });
+        }
+
+        res.status(200).json({
+            message: "Đơn hàng đã được thanh toán thành công",
+            order: updatedOrder
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

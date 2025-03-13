@@ -1,12 +1,13 @@
 const qs = require("qs");
 const crypto = require("crypto");
 
-const vnp_TmnCode = "YOUR_TMN_CODE";  // Lấy từ VNPay
-const vnp_HashSecret = "YOUR_HASH_SECRET"; // Lấy từ VNPay
-const vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"; // URL sandbox
-const vnp_ReturnUrl = "http://localhost:3000/vnpay-return"; // URL trả về sau thanh toán
+const vnp_TmnCode = process.env.VNP_TMNCODE;  // Lấy từ VNPay
+const vnp_HashSecret = process.env.VNP_HASHSECRET; // Lấy từ VNPay
+const vnp_Url = process.env.VNP_URL; // URL sandbox
+const vnp_ReturnUrl = process.env.VNP_RETURN_URL; // URL trả về sau thanh toán
 
 const createPayment = (req, res) => {
+    console.log("🔹 Nhận request tạo thanh toán:", req.body);
     const { amount, orderId } = req.body; // Lấy số tiền và mã đơn hàng từ request
 
     const date = new Date();

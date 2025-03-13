@@ -8,7 +8,7 @@ const Checkout = () => {
     const orderId = "DH" + Date.now();
 
     try {
-      const response = await fetch("http://localhost:8000/api/vnpay/create-payment", {
+      const response = await fetch("http://localhost:8000/v1/payment/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount, orderId }),

@@ -1,15 +1,20 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { increaseQuantity, decreaseQuantity, removeFromCart } from "../../redux/cartSlice";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./CartPage.css";
 
 const CartPage = () => {
   const cartItems = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Tính tổng tiền
   const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  const handleCheckout = () => {
+    navigate("/checkout");
+  };
 
   return (
     <div className="cart-container">
@@ -50,7 +55,7 @@ const CartPage = () => {
           </table>
           <div className="cart-summary">
             <h3>Tổng tiền: {totalPrice} VNĐ</h3>
-            <button className="checkout-btn">Thanh toán</button>
+            <button className="checkout-btn" onClick={handleCheckout}>Thanh toán</button>
             <Link to="/home" className="continue-shopping">Tiếp tục mua hàng</Link>
           </div>
         </div>
