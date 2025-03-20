@@ -26,7 +26,7 @@ const UserManagement = () => {
           getAllUsers(user?.accessToken, dispatch, axiosJWT);
           setTimeout(() => setDeleteMessage(""), 3000);
         } else {
-          setDeleteMessage("Xóa người dùng không thành công");
+          setDeleteMessage("Xóa người dùng thành công");
         }
       } catch (error) {
         console.error("Không thể xóa người dùng:", error);

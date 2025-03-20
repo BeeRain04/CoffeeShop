@@ -1,20 +1,43 @@
-/* Đảm bảo container chiếm hết chiều rộng */
+/* Định dạng tổng thể */
 .container_div {
   display: flex;
-  min-height: 100vh; /* Đảm bảo container chiếm hết chiều cao */
-  flex-direction: row; /* Chia không gian giữa sidebar và main content */
+  min-height: 100vh; /* Chiếm toàn bộ chiều cao màn hình */
+  background-color: #f4f6f9;
 }
 
+/* Sidebar - Giữ ở góc trái */
+.sidebar-nav {
+  width: 250px;
+  background-color: #2c3e50;
+  color: white;
+  height: 100vh;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Phần nội dung chính - Căn giữa */
 .user-management-container {
-  width: calc(100% - 250px); /* Chừa ra chiều rộng của sidebar */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Căn giữa theo chiều dọc */
+  align-items: center; /* Căn giữa theo chiều ngang */
   padding: 2rem;
   box-sizing: border-box;
-  background-color: #fff; /* Nền trắng cho phần chính */
-  flex-grow: 1; /* Để phần chính chiếm phần còn lại của màn hình */
+  background-color: #fff;
+  border-radius: 10px;
+  margin: auto;
+  width: 90%;
+  max-width: 1000px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
+/* Bảng danh sách người dùng */
 .user-table {
-  width: 100%; /* Đảm bảo bảng chiếm hết chiều rộng */
+  width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
 }
@@ -22,14 +45,14 @@
 .user-table th,
 .user-table td {
   padding: 1rem;
-  text-align: left;
-  border: 1px solid #ddd;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
 }
 
 .user-table th {
-  background-color: #f2f2f2; /* Màu nền nhạt cho tiêu đề bảng */
-  color: #333; /* Màu chữ tối cho tiêu đề */
-  font-weight: 700;
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
 }
 
 .user-table tr:nth-child(even) {
@@ -37,46 +60,38 @@
 }
 
 .user-table tr:hover {
-  background-color: #f1f1f1;
+  background-color: #e3f2fd;
 }
 
-/* Button xóa căn giữa */
+
+/* Nút xóa */
 .delete-user {
-  background-color: #ff6347;
+  background-color: #e74c3c;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem;
   color: white;
   cursor: pointer;
-  font-weight: 600;
-  border-radius: 8px;
+  font-weight: bold;
+  border-radius: 6px;
   display: flex;
-  justify-content: center; /* Căn giữa nội dung trong nút */
-  align-items: center; /* Căn giữa theo chiều dọc */
-  width: 150px; /* Chiều rộng cố định cho nút */
-  margin: 0 auto; /* Căn giữa nút trong cột */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.3s;
 }
 
 .delete-user:hover {
-  background-color: #d9534f;
+  background-color: #c0392b;
+  transform: scale(1.05);
 }
 
+/* Thông báo xóa */
 .delete-message {
-  background-color: #ffcccc;
-  color: #cc0000;
-  padding: 0.5rem;
-  border-radius: 8px;
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 0.6rem;
+  border-radius: 6px;
+  text-align: center;
   margin-top: 1rem;
-}
-
-.user-management-role {
-  margin-top: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #555; /* Màu chữ nhạt hơn cho vai trò người dùng */
-}
-
-.user-management-title {
-  font-size: 2rem;
-  color: #333; /* Màu chữ tối cho tiêu đề */
-  margin-bottom: 1.5rem;
+  font-weight: bold;
 }

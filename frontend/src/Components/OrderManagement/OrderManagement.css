@@ -1,270 +1,82 @@
-/* Tổng quan container */
-.container_div {
+.order-management-container {
     display: flex;
-    height: 100vh;
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f6f8;
+    height: 100vh; /* Chiều cao 100% màn hình */
 }
 
-/* Sidebar */
-.sidebar-nav {
-    width: 250px;
-    background-color: #343a40;
-    color: white;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-/* Nội dung chính */
 .order-content {
-    flex: 1;
-    padding: 30px;
-    background-color: white;
-    overflow-y: auto;
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto; /* Giúp cuộn nội dung nếu dài */
 }
 
-/* Tiêu đề */
 .order-title {
-    font-size: 2rem;
-    color: rgb(76, 161, 175);
+    font-size: 24px;
     margin-bottom: 20px;
-    font-weight: 600;
 }
 
-/* Thao tác tìm kiếm */
 .order-actions {
     display: flex;
-    justify-content: flex-start;
-    margin-bottom: 20px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
-.search-input {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    width: 300px;
-    font-size: 16px;
+.search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.search-box input {
+    border: none;
     outline: none;
-    transition: border-color 0.3s ease;
+    padding: 5px;
 }
 
-.search-input:focus {
-    border-color: #28a745;
-}
-
-/* Bảng đơn hàng */
-.table-wrapper {
-    overflow-x: auto;
-    margin-top: 20px;
+.refresh-button {
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
 }
 
 .order-table {
     width: 100%;
     border-collapse: collapse;
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.order-thead th {
-    background-color: rgb(76, 161, 175);
-    color: white;
-    padding: 16px;
+.order-table th, .order-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
     text-align: left;
-    font-size: 1rem;
-    text-transform: uppercase;
-    border-bottom: 2px solid #ddd;
-}
-
-.order-tbody td {
-    padding: 16px;
-    text-align: left;
-    vertical-align: middle;
-    border-bottom: 1px solid #eee;
-}
-
-.order-tbody .order-row:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.order-tbody .order-row:hover {
-    background-color: #e9ecef;
-}
-
-/* Nút hành động */
-.action-buttons {
-    display: flex;
-    gap: 12px;
 }
 
 .icon-button {
-    padding: 8px;
-    border-radius: 6px;
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.detail-button {
-    background-color: #17a2b8;
+    margin: 0 5px;
 }
 
 .delete-button {
-    background-color: #dc3545;
+    color: red;
 }
 
-.icon-button:hover {
-    transform: scale(1.05);
-}
-
-.icon-button:active {
-    transform: scale(0.95);
-}
-
-/* Phân trang */
 .pagination {
-    display: flex;
-    justify-content: center;
     margin-top: 20px;
 }
 
 .pagination-button {
-    padding: 12px 18px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin: 0 5px;
-    background-color: white;
-    font-size: 16px;
+    padding: 5px 10px;
+    margin: 2px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.pagination-button:hover {
-    background-color: #f1f1f1;
 }
 
 .pagination-button.active {
-    background-color: rgb(76, 161, 175);
+    background-color: #007bff;
     color: white;
-}
-
-/* Toast thông báo */
-.toast-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: #28a745;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 6px;
-    font-size: 16px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: opacity 0.5s ease-in-out;
-}
-
-.toast-notification.error {
-    background-color: #dc3545;
-}
-
-.toast-notification.success {
-    background-color: #28a745;
-}
-
-/* Modal confirm */
-.confirm-dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-}
-
-.confirm-dialog .confirm-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-}
-
-.confirm-dialog .confirm-button,
-.confirm-dialog .cancel-button {
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.confirm-button {
-    background-color: #28a745;
-    color: white;
-}
-
-.cancel-button {
-    background-color: #f1f1f1;
-    color: #333;
-}
-
-.confirm-button:hover {
-    background-color: #218838;
-}
-
-.cancel-button:hover {
-    background-color: #e0e0e0;
-}
-
-/* Styling for the status dropdown */
-.status-select {
-    padding: 5px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    width: 150px;
-    background-color: #f9f9f9;
-}
-
-/* Status colors */
-.status-pending {
-    background-color: #ffeb3b;
-    color: #fff;
-}
-
-.status-processing {
-    background-color: #ff9800;
-    color: #fff;
-}
-
-.status-completed {
-    background-color: #4caf50;
-    color: #fff;
-}
-
-.status-canceled {
-    background-color: #f44336;
-    color: #fff;
-}
-
-
-/* Responsive */
-@media (max-width: 768px) {
-    .order-actions {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .order-table {
-        min-width: 500px;
-    }
-
-    .search-input {
-        width: 100%;
-    }
-
-    .pagination-button {
-        padding: 10px 14px;
-    }
 }

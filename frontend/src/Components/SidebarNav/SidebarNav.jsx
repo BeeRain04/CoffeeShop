@@ -5,7 +5,7 @@ import { FiHome, FiUsers, FiBox, FiShoppingCart, FiPackage, FiDatabase, FiBarCha
 
 const SidebarNav = () => {
   const menuItems = [
-    { icon: <FiHome />, text: 'Bảng điều khiển', path: '/' },
+    { icon: <FiHome />, text: 'Bảng điều khiển', path: '/dashboard' },
     { icon: <FiUsers />, text: 'Quản Lý Người Dùng', path: '/usermanagement' },
     { icon: <FiBox />, text: 'Quản lý sản phẩm', path: '/product' },
     { icon: <FiShoppingCart />, text: 'Quản lý đơn hàng', path: '/order' },

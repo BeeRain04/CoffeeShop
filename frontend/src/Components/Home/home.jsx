@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../ProductCard/ProductCard.jsx";
 import Slider from "../Slider/Slider.jsx"; // Import slider
+import Chatbot from "../Chatbot/Chatbot.jsx";
 import "./Home.css";
 
 const Home = () => {
@@ -132,7 +133,7 @@ const Home = () => {
           {">"}
         </button>
       </div>
-
+      <Chatbot />
       {/* 🔥 Footer */}
       <footer className="footer">
         <div className="footer-container">
@@ -173,7 +174,6 @@ const Home = () => {
         </div>
         <p className="footer-bottom">© 2025 Coffee Shop. All rights reserved.</p>
       </footer>
-
     </div>
   );
 };

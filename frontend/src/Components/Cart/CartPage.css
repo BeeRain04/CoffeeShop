@@ -7,7 +7,7 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
   
-  h2 {
+  .cart-container h2 {
     text-align: center;
   }
   
@@ -61,5 +61,18 @@
   
   .continue-shopping:hover {
     color: #cc5500;
+  }
+  .clear-cart-btn {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+  }
+  
+  .clear-cart-btn:hover {
+    background-color: darkred;
   }
   

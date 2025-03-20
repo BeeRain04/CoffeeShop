@@ -103,27 +103,10 @@ router.post("/", async (req, res) => {
 // 2. Lấy danh sách tất cả đơn hàng
 router.get("/", async (req, res) => {
     try {
-        const orders = await Order.find()
-            .populate("customerId", "name")
-            .populate("items.productId", "name price");
-
-        const formattedOrders = orders.map(order => ({
-            orderId: order.orderId,
-            customer: order.customerId.name,
-            totalAmount: order.totalAmount,
-            status: order.status,
-            paymentMethod: order.paymentMethod,
-            isPaid: order.isPaid ? "Đã thanh toán" : "Chưa thanh toán", // Hiển thị trạng thái thanh toán
-            items: order.items.map(item => ({
-                product: item.productId.name,
-                quantity: item.quantity,
-                price: item.productId.price
-            }))
-        }));
-
-        res.status(200).json(formattedOrders);
+        const orders = await Order.find().populate("customerId", "name"); // Lấy tên khách hàng
+        res.json(orders);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: "Lỗi khi lấy danh sách đơn hàng" });
     }
 });
 
@@ -199,32 +182,14 @@ router.put("/:id", async (req, res) => {
 
 
 // 4. Cập nhật trạng thái đơn hàng
-router.put("/:id/status", async (req, res) => {
+router.put("/:id", async (req, res) => {
     try {
-        const { id } = req.params;
         const { status } = req.body;
-
-        // Kiểm tra trạng thái hợp lệ
-        const validStatuses = ['Chưa xử lý', 'Đang xử lý', 'Đã giao hàng', 'Đã hủy'];
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ message: "Trạng thái không hợp lệ" });
-        }
-
-        // Tìm và cập nhật trạng thái đơn hàng
-        const updatedOrder = await Order.findOneAndUpdate(
-            { orderId: id },  // Tìm theo orderId
-            { status },
-            { new: true }  // Trả về đối tượng đã cập nhật
-        );
-
-        if (!updatedOrder) {
-            return res.status(404).json({ message: "Đơn hàng không tồn tại" });
-        }
-
-        res.status(200).json(updatedOrder);
+        const updatedOrder = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+        if (!updatedOrder) return res.status(404).json({ error: "Không tìm thấy đơn hàng" });
+        res.json(updatedOrder);
     } catch (error) {
-        console.error('Error updating order status:', error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: "Lỗi khi cập nhật trạng thái" });
     }
 });
 

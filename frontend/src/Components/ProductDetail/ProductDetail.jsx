@@ -41,26 +41,26 @@ const ProductDetail = () => {
     document.body.appendChild(toast);
 
     setTimeout(() => {
-      toast.remove(); // ✅ Tự động ẩn sau 2 giây
+      toast.remove();
     }, 2000);
   };
 
   const handleAddToCart = () => {
     if (product) {
       dispatch(addToCart({ 
-        id: product.id, 
+        productId: product.productId, // Đảm bảo dùng đúng ID
         name: product.name, 
         price: product.price, 
         image: product.image, 
-        quantity 
+        quantity
       }));
-      showToast(`Đã thêm ${quantity} "${product.name}" vào giỏ hàng!`); // ✅ Hiển thị thông báo
+      showToast(`Đã thêm ${quantity} "${product.name}" vào giỏ hàng!`);
     }
   };
 
   const handleBuyNow = () => {
     handleAddToCart();
-    setTimeout(() => navigate("/cart"), 1000); // ✅ Điều hướng sau 1 giây
+    setTimeout(() => navigate("/cart"), 1000);
   };
 
   if (loading) return <p>Đang tải dữ liệu...</p>;
@@ -69,7 +69,6 @@ const ProductDetail = () => {
 
   return (
     <div className="product-detail-container">
-      {/* ✅ Cập nhật SEO với Helmet */}
       <Helmet>
         <title>{product.name} - Coffee shop</title>
         <meta property="og:title" content={product.name} />
@@ -97,30 +96,10 @@ const ProductDetail = () => {
         </div>
 
         <div className="action-buttons">
-          <button
-            className="add-to-cart"
-            onClick={() =>
-              dispatch(
-                addToCart({
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  image: product.image,
-                  quantity,
-                })
-              )
-            }
-          >
-            Thêm vào giỏ
-          </button>
-          <button className="buy-now" onClick={() => navigate("/cart")}>
-            Mua ngay
-          </button>
-          {/* ✅ Nút chia sẻ Facebook */}
+          <button className="add-to-cart" onClick={handleAddToCart}>Thêm vào giỏ</button>
+          <button className="buy-now" onClick={handleBuyNow}>Mua ngay</button>
           <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-              window.location.href
-            )}`}
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="share-button"

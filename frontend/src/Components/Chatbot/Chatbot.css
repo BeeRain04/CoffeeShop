@@ -1,0 +1,183 @@
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+/* Nút mở chat */
+.chat-toggle-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease-in-out;
+}
+
+.chat-toggle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 3px 3px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Cửa sổ chat */
+.chat-window {
+    width: 380px;
+    height: 480px;
+    background: linear-gradient(135deg, #ffffff, #f0f8ff);
+    border-radius: 15px;
+    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Hiệu ứng mở */
+@keyframes fadeIn {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Header */
+.chat-header {
+    background: #007bff;
+    color: white;
+    padding: 14px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Nội dung chat */
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Thanh cuộn tùy chỉnh */
+.chat-body::-webkit-scrollbar {
+    width: 5px;
+}
+
+.chat-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+/* Tin nhắn */
+.chat-message {
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 10px;
+    max-width: 75%;
+    font-size: 14px;
+    line-height: 1.4;
+    opacity: 0;
+    animation: fadeInMessage 0.3s ease-in-out forwards;
+}
+
+/* Hiệu ứng tin nhắn */
+@keyframes fadeInMessage {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tin nhắn người dùng */
+.chat-message.user {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    align-self: flex-end;
+    text-align: right;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Tin nhắn bot */
+.chat-message.bot {
+    background: #f1f1f1;
+    color: black;
+    align-self: flex-start;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer */
+.chat-footer {
+    display: flex;
+    padding: 12px;
+    background: #ffffff;
+    border-top: 1px solid #ddd;
+    align-items: center;
+}
+
+/* Ô nhập tin nhắn */
+.chat-footer input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+    transition: border 0.2s ease-in-out;
+}
+
+.chat-footer input:focus {
+    border: 1px solid #007bff;
+}
+
+/* Nút gửi tin nhắn */
+.chat-footer button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    margin-left: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Icon nút gửi */
+.chat-footer button::before {
+    content: "📩";
+}
+
+/* Hiệu ứng hover */
+.chat-footer button:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
