@@ -36,7 +36,7 @@ const createPayment = (req, res) => {
         "vnp_TxnRef": orderId,
         "vnp_OrderInfo": `Thanh toán đơn hàng ${orderId}`,
         "vnp_OrderType": "billpayment",
-        "vnp_Amount": amount * 100,
+        "vnp_Amount": amount,
         "vnp_ReturnUrl": vnp_ReturnUrl,
         "vnp_CreateDate": createDate,
         "vnp_IpAddr": vnp_IpAddr
@@ -51,6 +51,7 @@ const createPayment = (req, res) => {
         return acc;
     }, {});
 
+    const signData = qs.stringify(sortedParams, { encode: false });
     // Tạo chuỗi query string để ký
     const queryString = qs.stringify(sortedParams, { encode: false });
     console.log("🔹 Query string để ký (trước khi tạo chữ ký):", queryString);
@@ -73,9 +74,12 @@ const returnPayment = (req, res) => {
     let vnp_Params = req.query;
     console.log("🔹 Dữ liệu nhận từ VNPay:", vnp_Params);
 
-    const secureHash = vnp_Params["vnp_SecureHash"];  // Lưu chữ ký gốc
-    delete vnp_Params["vnp_SecureHash"];  // Xóa chữ ký trước khi ký lại
-    delete vnp_Params["vnp_SecureHashType"];  // ❌ Xóa cả `vnp_SecureHashType` vì VNPay không ký tham số này
+    const secureHash = vnp_Params["vnp_SecureHash"];  // Lưu chữ ký VNPay gửi về
+    delete vnp_Params["vnp_SecureHash"];  // Xóa chữ ký cũ trước khi ký lại
+    delete vnp_Params["vnp_SecureHashType"];  // Xóa tham số không cần thiết
+
+    // 🛠 Kiểm tra giá trị vnp_Amount có đúng không?
+    console.log("🔹 Giá trị vnp_Amount nhận được:", vnp_Params["vnp_Amount"]);
 
     // Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
@@ -101,9 +105,10 @@ const returnPayment = (req, res) => {
             return res.json({ status: "failed", message: "Thanh toán thất bại!" });
         }
     } else {
-        return res.json({ status: "error", message: "Chữ ký không hợp lệ!" });
+        return res.json({ status: "error", message: "Chữ ký không hợp lệ!", receivedHash: secureHash, generatedHash: signed });
     }
 };
+
 
 
 module.exports = { createPayment, returnPayment };
