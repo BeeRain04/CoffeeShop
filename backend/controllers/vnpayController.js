@@ -7,7 +7,13 @@ const vnp_Url = process.env.VNP_URL;
 const vnp_ReturnUrl = process.env.VNP_RETURN_URL;
 
 const createPayment = (req, res) => {
-    console.log("🔹 Đã vào createPayment");
+    console.log("Debug: Đã vào createPayment");
+    console.log("VNP_TMNCODE:", vnp_TmnCode);
+    console.log("VNP_HASHSECRET:", vnp_HashSecret);
+    console.log("VNP_URL:", vnp_Url);
+    console.log("VNP_RETURN_URL:", vnp_ReturnUrl);
+
+    console.log("🔹 Nhận request tạo thanh toán:", req.body);
 
     const { amount, orderId } = req.body;
     const date = new Date();
@@ -22,65 +28,70 @@ const createPayment = (req, res) => {
     const vnp_IpAddr = ipAddr.split(",")[0].trim();
 
     let vnp_Params = {
-        vnp_Version: "2.1.0",
-        vnp_Command: "pay",
-        vnp_TmnCode: vnp_TmnCode,
-        vnp_Locale: "vn",
-        vnp_CurrCode: "VND",
-        vnp_TxnRef: orderId,
-        vnp_OrderInfo: `Thanh toán đơn hàng ${orderId}`,
-        vnp_OrderType: "billpayment",
-        vnp_Amount: amount * 100,
-        vnp_ReturnUrl: vnp_ReturnUrl,
-        vnp_CreateDate: createDate,
-        vnp_IpAddr: vnp_IpAddr
+        "vnp_Version": "2.1.0",
+        "vnp_Command": "pay",
+        "vnp_TmnCode": vnp_TmnCode,
+        "vnp_Locale": "vn",
+        "vnp_CurrCode": "VND",
+        "vnp_TxnRef": orderId,
+        "vnp_OrderInfo": `Thanh toán đơn hàng ${orderId}`,
+        "vnp_OrderType": "billpayment",
+        "vnp_Amount": amount * 100,
+        "vnp_ReturnUrl": vnp_ReturnUrl,
+        "vnp_CreateDate": createDate,
+        "vnp_IpAddr": vnp_IpAddr
     };
 
-    // Sắp xếp tham số đúng thứ tự
+    // ❌ Xóa `vnp_SecureHash` trước khi ký
+    delete vnp_Params["vnp_SecureHash"];
+
+    // Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    // Tạo query string và ký SHA512
+    // Tạo chuỗi query string để ký
     const queryString = qs.stringify(sortedParams, { encode: false });
-    console.log("🔹 Query string để ký:", queryString);
+    console.log("🔹 Query string để ký (trước khi tạo chữ ký):", queryString);
 
+    // Tạo chữ ký
     const signed = crypto.createHmac("sha512", vnp_HashSecret)
         .update(queryString)
         .digest("hex");
 
     vnp_Params["vnp_SecureHash"] = signed;
 
-    // Tạo URL thanh toán
     const paymentUrl = `${vnp_Url}?${qs.stringify(vnp_Params, { encode: false })}`;
-
     console.log("✅ URL Thanh toán VNPay:", paymentUrl);
+
     res.json({ paymentUrl });
 };
+
 
 const returnPayment = (req, res) => {
     let vnp_Params = req.query;
     console.log("🔹 Dữ liệu nhận từ VNPay:", vnp_Params);
 
-    const secureHash = vnp_Params["vnp_SecureHash"];
-    delete vnp_Params["vnp_SecureHash"];
+    const secureHash = vnp_Params["vnp_SecureHash"];  // Lưu chữ ký gốc
+    delete vnp_Params["vnp_SecureHash"];  // Xóa chữ ký trước khi ký lại
+    delete vnp_Params["vnp_SecureHashType"];  // ❌ Xóa cả `vnp_SecureHashType` vì VNPay không ký tham số này
 
-    // Sắp xếp tham số đúng thứ tự
-    vnp_Params = Object.keys(vnp_Params).sort().reduce((acc, key) => {
+    // Sắp xếp tham số theo thứ tự a-z
+    const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    // Tạo query string trước khi ký lại
-    const signData = qs.stringify(vnp_Params, { encode: false });
+    // Tạo chuỗi query string để ký
+    const signData = qs.stringify(sortedParams, { encode: false });
     console.log("🔹 Query string trước khi ký lại:", signData);
 
-    const signed = crypto.createHmac("sha512", vnp_HashSecret)
-        .update(Buffer.from(signData, "utf-8"))
-        .digest("hex");
+    // Tạo chữ ký mới
+    const hmac = crypto.createHmac("sha512", vnp_HashSecret);
+    const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
-    console.log("🔹 SecureHash nhận từ VNPay:", secureHash);
+    console.log("🔹 SecureHash nhận được:", secureHash);
     console.log("🔹 SecureHash tự tạo:", signed);
 
     if (secureHash === signed) {
@@ -93,5 +104,6 @@ const returnPayment = (req, res) => {
         return res.json({ status: "error", message: "Chữ ký không hợp lệ!" });
     }
 };
+
 
 module.exports = { createPayment, returnPayment };
