@@ -9,17 +9,19 @@ const vnp_ReturnUrl = process.env.VNP_RETURN_URL;
 const createPayment = (req, res) => {
     console.log("Debug: Đã vào createPayment");
     console.log("VNP_TMNCODE:", vnp_TmnCode);
-    console.log("VNP_HASHSECRET:", vnp_HashSecret);
+    console.log("VNP_HASHSECRET:", vnp_HashSecret ? "✅ Đã có giá trị" : "❌ Bị undefined");
     console.log("VNP_URL:", vnp_Url);
     console.log("VNP_RETURN_URL:", vnp_ReturnUrl);
-    console.log("🔹 Query string để ký gửi lên VNPay:", signData);
-    console.log("🔹 SecureHash nhận được:", secureHash);
-    console.log("🔹 SecureHash tự tạo:", signed);
-
 
     console.log("🔹 Nhận request tạo thanh toán:", req.body);
 
     const { amount, orderId } = req.body;
+
+    if (!amount || !orderId) {
+        console.error("❌ Lỗi: Thiếu amount hoặc orderId!");
+        return res.status(400).json({ error: "Thiếu amount hoặc orderId" });
+    }
+
     const date = new Date();
     const createDate = date.getFullYear().toString() +
         (date.getMonth() + 1).toString().padStart(2, "0") +
@@ -28,8 +30,8 @@ const createPayment = (req, res) => {
         date.getMinutes().toString().padStart(2, "0") +
         date.getSeconds().toString().padStart(2, "0");
 
-    const ipAddr = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-    const vnp_IpAddr = ipAddr.split(",")[0].trim();
+    const ipAddr = req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "127.0.0.1";
+    const vnp_IpAddr = ipAddr.includes(",") ? ipAddr.split(",")[0].trim() : ipAddr;
 
     let vnp_Params = {
         "vnp_Version": "2.1.0",
@@ -46,25 +48,21 @@ const createPayment = (req, res) => {
         "vnp_IpAddr": vnp_IpAddr
     };
 
-    // ❌ Xóa `vnp_SecureHash` trước khi ký
     delete vnp_Params["vnp_SecureHash"];
 
-    // Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    const signData = Buffer.from(qs.stringify(sortedParams, { encode: false }), "utf-8");
-
-    // Tạo chuỗi query string để ký
     const queryString = qs.stringify(sortedParams, { encode: false });
-    console.log("🔹 Query string để ký (trước khi tạo chữ ký):", queryString);
+    console.log("🔹 Query string để ký:", queryString);
 
-    // Tạo chữ ký
     const signed = crypto.createHmac("sha512", vnp_HashSecret)
         .update(queryString)
         .digest("hex");
+
+    console.log("🔹 Chữ ký SHA512 tạo ra:", signed);
 
     vnp_Params["vnp_SecureHash"] = signed;
 
@@ -73,6 +71,7 @@ const createPayment = (req, res) => {
 
     res.json({ paymentUrl });
 };
+
 
 
 const returnPayment = (req, res) => {
