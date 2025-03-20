@@ -12,6 +12,10 @@ const createPayment = (req, res) => {
     console.log("VNP_HASHSECRET:", vnp_HashSecret);
     console.log("VNP_URL:", vnp_Url);
     console.log("VNP_RETURN_URL:", vnp_ReturnUrl);
+    console.log("🔹 Query string để ký gửi lên VNPay:", signData);
+    console.log("🔹 SecureHash nhận được:", secureHash);
+    console.log("🔹 SecureHash tự tạo:", signed);
+
 
     console.log("🔹 Nhận request tạo thanh toán:", req.body);
 
@@ -36,7 +40,7 @@ const createPayment = (req, res) => {
         "vnp_TxnRef": orderId,
         "vnp_OrderInfo": `Thanh toán đơn hàng ${orderId}`,
         "vnp_OrderType": "billpayment",
-        "vnp_Amount": amount,
+        "vnp_Amount": amount * 100,
         "vnp_ReturnUrl": vnp_ReturnUrl,
         "vnp_CreateDate": createDate,
         "vnp_IpAddr": vnp_IpAddr
@@ -51,7 +55,8 @@ const createPayment = (req, res) => {
         return acc;
     }, {});
 
-    const signData = qs.stringify(sortedParams, { encode: false });
+    const signData = Buffer.from(qs.stringify(sortedParams, { encode: false }), "utf-8");
+
     // Tạo chuỗi query string để ký
     const queryString = qs.stringify(sortedParams, { encode: false });
     console.log("🔹 Query string để ký (trước khi tạo chữ ký):", queryString);
