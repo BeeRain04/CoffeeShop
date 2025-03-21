@@ -12,7 +12,6 @@ const createPayment = (req, res) => {
     console.log("VNP_HASHSECRET:", vnp_HashSecret ? "✅ Đã có giá trị" : "❌ Bị undefined");
     console.log("VNP_URL:", vnp_Url);
     console.log("VNP_RETURN_URL:", vnp_ReturnUrl);
-
     console.log("🔹 Nhận request tạo thanh toán:", req.body);
 
     const { amount, orderId } = req.body;
@@ -48,24 +47,31 @@ const createPayment = (req, res) => {
         "vnp_IpAddr": vnp_IpAddr
     };
 
+    // ✅ Xóa các tham số không cần thiết trước khi ký
     delete vnp_Params["vnp_SecureHash"];
+    delete vnp_Params["vnp_SecureHashType"];
 
+    // ✅ Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
+    // ✅ Tạo query string để ký
     const queryString = qs.stringify(sortedParams, { encode: false });
     console.log("🔹 Query string để ký:", queryString);
 
-    const signed = crypto.createHmac("sha512", vnp_HashSecret)
+    // ✅ Tạo chữ ký SHA512
+    const secureHash = crypto.createHmac("sha512", vnp_HashSecret)
         .update(queryString)
         .digest("hex");
 
-    console.log("🔹 Chữ ký SHA512 tạo ra:", signed);
+    console.log("🔹 Chữ ký SHA512 tạo ra:", secureHash);
 
-    vnp_Params["vnp_SecureHash"] = signed;
+    // ✅ Thêm chữ ký vào query params
+    vnp_Params["vnp_SecureHash"] = secureHash;
 
+    // ✅ Tạo URL thanh toán
     const paymentUrl = `${vnp_Url}?${qs.stringify(vnp_Params, { encode: false })}`;
     console.log("✅ URL Thanh toán VNPay:", paymentUrl);
 
@@ -73,35 +79,38 @@ const createPayment = (req, res) => {
 };
 
 
-
 const returnPayment = (req, res) => {
-    let vnp_Params = req.query;
+    let vnp_Params = { ...req.query };
     console.log("🔹 Dữ liệu nhận từ VNPay:", vnp_Params);
 
     const secureHash = vnp_Params["vnp_SecureHash"];  // Lưu chữ ký VNPay gửi về
-    delete vnp_Params["vnp_SecureHash"];  // Xóa chữ ký cũ trước khi ký lại
-    delete vnp_Params["vnp_SecureHashType"];  // Xóa tham số không cần thiết
 
-    // 🛠 Kiểm tra giá trị vnp_Amount có đúng không?
+    // ✅ Xóa các tham số không cần thiết trước khi ký lại
+    delete vnp_Params["vnp_SecureHash"];
+    delete vnp_Params["vnp_SecureHashType"];
+
+    // ✅ Kiểm tra giá trị `vnp_Amount`
     console.log("🔹 Giá trị vnp_Amount nhận được:", vnp_Params["vnp_Amount"]);
 
-    // Sắp xếp tham số theo thứ tự a-z
+    // ✅ Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    // Tạo chuỗi query string để ký
+    // ✅ Tạo chuỗi query string để ký
     const signData = qs.stringify(sortedParams, { encode: false });
     console.log("🔹 Query string trước khi ký lại:", signData);
 
-    // Tạo chữ ký mới
-    const hmac = crypto.createHmac("sha512", vnp_HashSecret);
-    const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
+    // ✅ Tạo chữ ký mới
+    const signed = crypto.createHmac("sha512", vnp_HashSecret)
+        .update(Buffer.from(signData, "utf-8"))
+        .digest("hex");
 
     console.log("🔹 SecureHash nhận được:", secureHash);
     console.log("🔹 SecureHash tự tạo:", signed);
 
+    // ✅ So sánh chữ ký để kiểm tra tính hợp lệ
     if (secureHash === signed) {
         if (vnp_Params["vnp_ResponseCode"] === "00") {
             return res.json({ status: "success", message: "Thanh toán thành công!" });
@@ -109,10 +118,13 @@ const returnPayment = (req, res) => {
             return res.json({ status: "failed", message: "Thanh toán thất bại!" });
         }
     } else {
-        return res.json({ status: "error", message: "Chữ ký không hợp lệ!", receivedHash: secureHash, generatedHash: signed });
+        return res.json({
+            status: "error",
+            message: "Chữ ký không hợp lệ!",
+            receivedHash: secureHash,
+            generatedHash: signed
+        });
     }
 };
-
-
 
 module.exports = { createPayment, returnPayment };
