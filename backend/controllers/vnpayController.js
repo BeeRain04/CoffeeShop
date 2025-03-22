@@ -39,7 +39,7 @@ const createPayment = (req, res) => {
         "vnp_Locale": "vn",
         "vnp_CurrCode": "VND",
         "vnp_TxnRef": orderId,
-        "vnp_OrderInfo": `Thanh toán đơn hàng ${orderId}`,
+        "vnp_OrderInfo": `Thanh toan don hang ${orderId}`,
         "vnp_OrderType": "billpayment",
         "vnp_Amount": amount * 100,
         "vnp_ReturnUrl": vnp_ReturnUrl,
