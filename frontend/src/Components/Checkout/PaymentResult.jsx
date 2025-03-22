@@ -8,7 +8,7 @@ const PaymentResult = () => {
     const fetchPaymentResult = async () => {
       const query = window.location.search;
       try {
-        const response = await fetch(`http://localhost:8000/v1/payment/return${query}`);
+        const response = await fetch(`https://coffeeshop-com.onrender.com/v1/payment/vnpay-return${query}`);
         const data = await response.json();
         setMessage(data.message);
       } catch (error) {
