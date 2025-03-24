@@ -29,6 +29,15 @@ const createPayment = (req, res) => {
         date.getMinutes().toString().padStart(2, "0") +
         date.getSeconds().toString().padStart(2, "0");
 
+    // Thêm vnp_ExpireDate (hết hạn sau 15 phút)
+    const expireDate = new Date(date.getTime() + 15 * 60 * 1000); // +15 phút
+    const vnp_ExpireDate = expireDate.getFullYear().toString() +
+        (expireDate.getMonth() + 1).toString().padStart(2, "0") +
+        expireDate.getDate().toString().padStart(2, "0") +
+        expireDate.getHours().toString().padStart(2, "0") +
+        expireDate.getMinutes().toString().padStart(2, "0") +
+        expireDate.getSeconds().toString().padStart(2, "0");
+
     const ipAddr = req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "127.0.0.1";
     const vnp_IpAddr = ipAddr.includes(",") ? ipAddr.split(",")[0].trim() : ipAddr;
 
@@ -44,65 +53,65 @@ const createPayment = (req, res) => {
         "vnp_Amount": amount * 100,
         "vnp_ReturnUrl": vnp_ReturnUrl,
         "vnp_CreateDate": createDate,
+        "vnp_ExpireDate": vnp_ExpireDate, // Thêm tham số vnp_ExpireDate
         "vnp_IpAddr": vnp_IpAddr
     };
 
-    // ✅ Xóa các tham số không cần thiết trước khi ký
+    // Xóa các tham số không cần thiết trước khi ký
     delete vnp_Params["vnp_SecureHash"];
     delete vnp_Params["vnp_SecureHashType"];
 
-    // ✅ Sắp xếp tham số theo thứ tự a-z
+    // Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    // ✅ Tạo query string để ký
-    const queryString = qs.stringify(sortedParams, { encode: false });
-    console.log("🔹 Query string để ký:", queryString);
+    // Tạo query string để ký, mã hóa URL các giá trị
+    const queryString = qs.stringify(sortedParams, { encode: true }); // Bật encode để mã hóa URL
+    console.log("🔹 Query string để ký (đã mã hóa URL):", queryString);
 
-    // ✅ Tạo chữ ký SHA512
+    // Tạo chữ ký SHA512
     const secureHash = crypto.createHmac("sha512", vnp_HashSecret)
         .update(queryString)
         .digest("hex");
 
     console.log("🔹 Chữ ký SHA512 tạo ra:", secureHash);
 
-    // ✅ Thêm chữ ký vào query params
+    // Thêm chữ ký vào query params
     vnp_Params["vnp_SecureHash"] = secureHash;
 
-    // ✅ Tạo URL thanh toán
-    const paymentUrl = `${vnp_Url}?${qs.stringify(vnp_Params, { encode: false })}`;
+    // Tạo URL thanh toán, mã hóa URL các tham số
+    const paymentUrl = `${vnp_Url}?${qs.stringify(vnp_Params, { encode: true })}`;
     console.log("✅ URL Thanh toán VNPay:", paymentUrl);
 
     res.json({ paymentUrl });
 };
 
-
 const returnPayment = (req, res) => {
     let vnp_Params = { ...req.query };
     console.log("🔹 Dữ liệu nhận từ VNPay:", vnp_Params);
 
-    const secureHash = vnp_Params["vnp_SecureHash"];  // Lưu chữ ký VNPay gửi về
+    const secureHash = vnp_Params["vnp_SecureHash"]; // Lưu chữ ký VNPay gửi về
 
-    // ✅ Xóa các tham số không cần thiết trước khi ký lại
+    // Xóa các tham số không cần thiết trước khi ký lại
     delete vnp_Params["vnp_SecureHash"];
     delete vnp_Params["vnp_SecureHashType"];
 
-    // ✅ Kiểm tra giá trị `vnp_Amount`
+    // Kiểm tra giá trị `vnp_Amount`
     console.log("🔹 Giá trị vnp_Amount nhận được:", vnp_Params["vnp_Amount"]);
 
-    // ✅ Sắp xếp tham số theo thứ tự a-z
+    // Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    // ✅ Tạo chuỗi query string để ký
-    const signData = qs.stringify(sortedParams, { encode: false });
-    console.log("🔹 Query string trước khi ký lại:", signData);
+    // Tạo chuỗi query string để ký, mã hóa URL các giá trị
+    const signData = qs.stringify(sortedParams, { encode: true }); // Bật encode để mã hóa URL
+    console.log("🔹 Query string trước khi ký lại (đã mã hóa URL):", signData);
 
-    // ✅ Tạo chữ ký mới
+    // Tạo chữ ký mới
     const signed = crypto.createHmac("sha512", vnp_HashSecret)
         .update(Buffer.from(signData, "utf-8"))
         .digest("hex");
@@ -110,7 +119,7 @@ const returnPayment = (req, res) => {
     console.log("🔹 SecureHash nhận được:", secureHash);
     console.log("🔹 SecureHash tự tạo:", signed);
 
-    // ✅ So sánh chữ ký để kiểm tra tính hợp lệ
+    // So sánh chữ ký để kiểm tra tính hợp lệ
     if (secureHash === signed) {
         if (vnp_Params["vnp_ResponseCode"] === "00") {
             return res.json({ status: "success", message: "Thanh toán thành công!" });
