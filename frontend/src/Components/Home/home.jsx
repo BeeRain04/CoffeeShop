@@ -21,13 +21,28 @@ const Home = () => {
       try {
         const response = await fetch("http://localhost:8000/v1/products");
         const data = await response.json();
-        setProducts(data);
-        setFilteredProducts(data);
+        
+        // Thêm thông tin category vào mỗi sản phẩm
+        const productsWithCategories = await Promise.all(
+          data.map(async (product) => {
+            try {
+              const categoryResponse = await fetch(`http://localhost:8000/v1/categories/${product.categoryId}`);
+              const categoryData = await categoryResponse.json();
+              return { ...product, categoryName: categoryData.name };
+            } catch (error) {
+              console.error("Lỗi khi lấy danh mục:", error);
+              return { ...product, categoryName: "Không xác định" };
+            }
+          })
+        );
+  
+        setProducts(productsWithCategories);
+        setFilteredProducts(productsWithCategories);
       } catch (error) {
         console.error("Lỗi khi tải sản phẩm:", error);
       }
     };
-
+  
     const fetchCategories = async () => {
       try {
         const response = await fetch("http://localhost:8000/v1/categories");
@@ -37,17 +52,17 @@ const Home = () => {
         console.error("Lỗi khi tải danh mục:", error);
       }
     };
-
+  
     fetchProducts();
     fetchCategories();
-  }, []);
+  }, []);  
 
   useEffect(() => {
     let filtered = products;
 
     if (selectedCategory !== "all") {
       filtered = filtered.filter((product) => product.categoryId === selectedCategory);
-    }
+    }       
 
     if (search.trim() !== "") {
       filtered = filtered.filter((product) =>
@@ -92,7 +107,7 @@ const Home = () => {
           <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
             <option value="all">Tất cả</option>
             {categories.map((category) => (
-              <option key={category.categoryId} value={category.categoryId}>
+              <option key={category.categoryId} value={String(category.categoryId)}>
                 {category.name}
               </option>
             ))}

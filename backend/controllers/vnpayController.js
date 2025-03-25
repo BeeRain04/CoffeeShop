@@ -1,12 +1,25 @@
 const qs = require("qs");
 const crypto = require("crypto");
+const fetch = require("node-fetch");
 
 const vnp_TmnCode = process.env.VNP_TMNCODE;
 const vnp_HashSecret = process.env.VNP_HASHSECRET;
 const vnp_Url = process.env.VNP_URL;
 const vnp_ReturnUrl = process.env.VNP_RETURN_URL;
 
-const createPayment = (req, res) => {
+// Hàm lấy thời gian từ API
+const getServerTime = async () => {
+    try {
+        const response = await fetch("http://worldtimeapi.org/api/timezone/Asia/Ho_Chi_Minh");
+        const data = await response.json();
+        return new Date(data.datetime);
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy thời gian từ API:", error);
+        return new Date(); // Fallback to local time
+    }
+};
+
+const createPayment = async (req, res) => {
     console.log("Debug: Đã vào createPayment");
     console.log("VNP_TMNCODE:", vnp_TmnCode);
     console.log("VNP_HASHSECRET:", vnp_HashSecret ? "✅ Đã có giá trị" : "❌ Bị undefined");
@@ -21,7 +34,11 @@ const createPayment = (req, res) => {
         return res.status(400).json({ error: "Thiếu amount hoặc orderId" });
     }
 
-    const date = new Date();
+    // Lấy thời gian từ API
+    const date = await getServerTime();
+    console.log("🔹 Server time (UTC):", date.toISOString());
+    console.log("🔹 VN time (UTC+7):", date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }));
+
     const createDate = date.getFullYear().toString() +
         (date.getMonth() + 1).toString().padStart(2, "0") +
         date.getDate().toString().padStart(2, "0") +
@@ -38,6 +55,9 @@ const createPayment = (req, res) => {
         expireDate.getMinutes().toString().padStart(2, "0") +
         expireDate.getSeconds().toString().padStart(2, "0");
 
+    console.log("🔹 vnp_CreateDate:", createDate);
+    console.log("🔹 vnp_ExpireDate:", vnp_ExpireDate);
+
     const ipAddr = req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "127.0.0.1";
     const vnp_IpAddr = ipAddr.includes(",") ? ipAddr.split(",")[0].trim() : ipAddr;
 
@@ -53,7 +73,7 @@ const createPayment = (req, res) => {
         "vnp_Amount": amount * 100,
         "vnp_ReturnUrl": vnp_ReturnUrl,
         "vnp_CreateDate": createDate,
-        "vnp_ExpireDate": vnp_ExpireDate, // Thêm tham số vnp_ExpireDate
+        "vnp_ExpireDate": vnp_ExpireDate,
         "vnp_IpAddr": vnp_IpAddr
     };
 
@@ -68,7 +88,7 @@ const createPayment = (req, res) => {
     }, {});
 
     // Tạo query string để ký, mã hóa URL các giá trị
-    const queryString = qs.stringify(sortedParams, { encode: true }); // Bật encode để mã hóa URL
+    const queryString = qs.stringify(sortedParams, { encode: true });
     console.log("🔹 Query string để ký (đã mã hóa URL):", queryString);
 
     // Tạo chữ ký SHA512
@@ -92,26 +112,21 @@ const returnPayment = (req, res) => {
     let vnp_Params = { ...req.query };
     console.log("🔹 Dữ liệu nhận từ VNPay:", vnp_Params);
 
-    const secureHash = vnp_Params["vnp_SecureHash"]; // Lưu chữ ký VNPay gửi về
+    const secureHash = vnp_Params["vnp_SecureHash"];
 
-    // Xóa các tham số không cần thiết trước khi ký lại
     delete vnp_Params["vnp_SecureHash"];
     delete vnp_Params["vnp_SecureHashType"];
 
-    // Kiểm tra giá trị `vnp_Amount`
     console.log("🔹 Giá trị vnp_Amount nhận được:", vnp_Params["vnp_Amount"]);
 
-    // Sắp xếp tham số theo thứ tự a-z
     const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
         acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
-    // Tạo chuỗi query string để ký, mã hóa URL các giá trị
-    const signData = qs.stringify(sortedParams, { encode: true }); // Bật encode để mã hóa URL
+    const signData = qs.stringify(sortedParams, { encode: true });
     console.log("🔹 Query string trước khi ký lại (đã mã hóa URL):", signData);
 
-    // Tạo chữ ký mới
     const signed = crypto.createHmac("sha512", vnp_HashSecret)
         .update(Buffer.from(signData, "utf-8"))
         .digest("hex");
@@ -119,7 +134,6 @@ const returnPayment = (req, res) => {
     console.log("🔹 SecureHash nhận được:", secureHash);
     console.log("🔹 SecureHash tự tạo:", signed);
 
-    // So sánh chữ ký để kiểm tra tính hợp lệ
     if (secureHash === signed) {
         if (vnp_Params["vnp_ResponseCode"] === "00") {
             return res.json({ status: "success", message: "Thanh toán thành công!" });

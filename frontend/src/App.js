@@ -27,6 +27,7 @@ import ProductDetail from "./Components/ProductDetail/ProductDetail";
 import Cart from "./Components/Cart/CartPage";
 import Checkout from "./Components/Checkout/Checkout";
 import PaymentResult from "./Components/Checkout/PaymentResult";
+import CatePage from "./Components/CatePage/CategoryPage.jsx";
 import { HelmetProvider } from "react-helmet-async";
 
 
@@ -78,6 +79,8 @@ function App() {
           <Route path="/product/:productId" element={<ProductDetail />} />
           {/*Route của cart*/}
           <Route path="/cart" element={<Cart/>}/>
+          {/*Route của catepage*/}
+          <Route path="/category/:categoryId" element={<CatePage />} />
           {/*Route của thanh toán*/}
           <Route path="/checkout" element={<Checkout/>}/>
           <Route path="/paymentresult" element={<PaymentResult/>}/>
