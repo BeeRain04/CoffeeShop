@@ -8,10 +8,7 @@ const vnp_ReturnUrl = process.env.VNP_RETURN_URL;
 
 // Hàm lấy thời gian (không dùng API bên ngoài)
 const getServerTime = () => {
-    const now = new Date();
-    // Điều chỉnh múi giờ sang UTC+7 (Asia/Ho_Chi_Minh)
-    const vnDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    return vnDate;
+    return new Date(); // Lấy thời gian UTC từ server
 };
 
 const createPayment = async (req, res) => {
@@ -30,30 +27,48 @@ const createPayment = async (req, res) => {
         return res.status(400).json({ error: "Thiếu amount hoặc orderId" });
     }
 
-    // Lấy thời gian
+    // Lấy thời gian UTC
     const date = getServerTime();
     console.log("🔹 Server time (UTC):", date.toISOString());
     console.log("🔹 VN time (UTC+7):", date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }));
 
-    // Thời gian giờ Việt Nam (UTC+7) để gửi trong vnp_Params và tính chữ ký
-    const vnDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    const createDate = vnDate.getFullYear().toString() +
-        (vnDate.getMonth() + 1).toString().padStart(2, "0") +
-        vnDate.getDate().toString().padStart(2, "0") +
-        vnDate.getHours().toString().padStart(2, "0") +
-        vnDate.getMinutes().toString().padStart(2, "0") +
-        vnDate.getSeconds().toString().padStart(2, "0");
+    // Thời gian UTC để tính chữ ký
+    const createDateForHash = date.getUTCFullYear().toString() +
+        (date.getUTCMonth() + 1).toString().padStart(2, "0") +
+        date.getUTCDate().toString().padStart(2, "0") +
+        date.getUTCHours().toString().padStart(2, "0") +
+        date.getUTCMinutes().toString().padStart(2, "0") +
+        date.getUTCSeconds().toString().padStart(2, "0");
+
+    const expireDateForHash = new Date(date.getTime() + 15 * 60 * 1000);
+    const vnp_ExpireDateForHash = expireDateForHash.getUTCFullYear().toString() +
+        (expireDateForHash.getUTCMonth() + 1).toString().padStart(2, "0") +
+        expireDateForHash.getUTCDate().toString().padStart(2, "0") +
+        expireDateForHash.getUTCHours().toString().padStart(2, "0") +
+        expireDateForHash.getUTCMinutes().toString().padStart(2, "0") +
+        expireDateForHash.getUTCSeconds().toString().padStart(2, "0");
+
+    // Thời gian gửi trong vnp_Params: UTC + 7 giờ (tương ứng UTC+7)
+    const vnDate = new Date(date.getTime() + 7 * 60 * 60 * 1000); // Thêm 7 giờ vào thời gian UTC
+    const createDate = vnDate.getUTCFullYear().toString() +
+        (vnDate.getUTCMonth() + 1).toString().padStart(2, "0") +
+        vnDate.getUTCDate().toString().padStart(2, "0") +
+        vnDate.getUTCHours().toString().padStart(2, "0") +
+        vnDate.getUTCMinutes().toString().padStart(2, "0") +
+        vnDate.getUTCSeconds().toString().padStart(2, "0");
 
     const expireDate = new Date(vnDate.getTime() + 15 * 60 * 1000);
-    const vnp_ExpireDate = expireDate.getFullYear().toString() +
-        (expireDate.getMonth() + 1).toString().padStart(2, "0") +
-        expireDate.getDate().toString().padStart(2, "0") +
-        expireDate.getHours().toString().padStart(2, "0") +
-        expireDate.getMinutes().toString().padStart(2, "0") +
-        expireDate.getSeconds().toString().padStart(2, "0");
+    const vnp_ExpireDate = expireDate.getUTCFullYear().toString() +
+        (expireDate.getUTCMonth() + 1).toString().padStart(2, "0") +
+        expireDate.getUTCDate().toString().padStart(2, "0") +
+        expireDate.getUTCHours().toString().padStart(2, "0") +
+        expireDate.getUTCMinutes().toString().padStart(2, "0") +
+        expireDate.getUTCSeconds().toString().padStart(2, "0");
 
-    console.log("🔹 vnp_CreateDate (VN time):", createDate);
-    console.log("🔹 vnp_ExpireDate (VN time):", vnp_ExpireDate);
+    console.log("🔹 vnp_CreateDate (UTC, for hash):", createDateForHash);
+    console.log("🔹 vnp_ExpireDate (UTC, for hash):", vnp_ExpireDateForHash);
+    console.log("🔹 vnp_CreateDate (UTC+7, for params):", createDate);
+    console.log("🔹 vnp_ExpireDate (UTC+7, for params):", vnp_ExpireDate);
 
     const ipAddr = req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "127.0.0.1";
     const vnp_IpAddr = ipAddr.includes(",") ? ipAddr.split(",")[0].trim() : ipAddr;
@@ -70,20 +85,25 @@ const createPayment = async (req, res) => {
         "vnp_OrderType": "billpayment",
         "vnp_Amount": amount * 100,
         "vnp_ReturnUrl": vnp_ReturnUrl,
-        "vnp_CreateDate": createDate, // Dùng giờ Việt Nam
-        "vnp_ExpireDate": vnp_ExpireDate, // Dùng giờ Việt Nam
+        "vnp_CreateDate": createDate, // Dùng UTC+7
+        "vnp_ExpireDate": vnp_ExpireDate, // Dùng UTC+7
         "vnp_IpAddr": vnp_IpAddr
     };
 
     console.log("🔹 vnp_Params trước khi ký:", vnp_Params);
 
+    // Tạo một bản sao của vnp_Params để tính chữ ký, dùng thời gian UTC
+    let vnp_ParamsForHash = { ...vnp_Params };
+    vnp_ParamsForHash["vnp_CreateDate"] = createDateForHash; // Dùng UTC để tính chữ ký
+    vnp_ParamsForHash["vnp_ExpireDate"] = vnp_ExpireDateForHash; // Dùng UTC để tính chữ ký
+
     // Xóa các tham số không cần thiết trước khi ký
-    delete vnp_Params["vnp_SecureHash"];
-    delete vnp_Params["vnp_SecureHashType"];
+    delete vnp_ParamsForHash["vnp_SecureHash"];
+    delete vnp_ParamsForHash["vnp_SecureHashType"];
 
     // Sắp xếp tham số theo thứ tự a-z
-    const sortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
-        acc[key] = vnp_Params[key];
+    const sortedParams = Object.keys(vnp_ParamsForHash).sort().reduce((acc, key) => {
+        acc[key] = vnp_ParamsForHash[key];
         return acc;
     }, {});
 
@@ -91,7 +111,7 @@ const createPayment = async (req, res) => {
 
     // Tạo query string để ký, mã hóa URL các giá trị
     const queryString = qs.stringify(sortedParams, { encode: true });
-    console.log("🔹 Query string để ký (đã mã hóa URL, dùng VN time):", queryString);
+    console.log("🔹 Query string để ký (đã mã hóa URL, dùng UTC):", queryString);
 
     // Tạo chữ ký SHA512
     const secureHash = crypto.createHmac("sha512", vnp_HashSecret)
