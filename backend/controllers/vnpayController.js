@@ -23,6 +23,7 @@ const createPayment = async (req, res) => {
     console.log("Debug: Đã vào createPayment");
     console.log("VNP_TMNCODE:", vnp_TmnCode);
     console.log("VNP_HASHSECRET:", vnp_HashSecret ? "✅ Đã có giá trị" : "❌ Bị undefined");
+    console.log("🔹 vnp_HashSecret:", vnp_HashSecret); // Thêm log để kiểm tra
     console.log("VNP_URL:", vnp_Url);
     console.log("VNP_RETURN_URL:", vnp_ReturnUrl);
     console.log("🔹 Nhận request tạo thanh toán:", req.body);
@@ -39,26 +40,24 @@ const createPayment = async (req, res) => {
     console.log("🔹 Server time (UTC):", date.toISOString());
     console.log("🔹 VN time (UTC+7):", date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }));
 
-    // Điều chỉnh thời gian theo giờ Việt Nam (UTC+7)
-    const vnDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    const createDate = vnDate.getFullYear().toString() +
-        (vnDate.getMonth() + 1).toString().padStart(2, "0") +
-        vnDate.getDate().toString().padStart(2, "0") +
-        vnDate.getHours().toString().padStart(2, "0") +
-        vnDate.getMinutes().toString().padStart(2, "0") +
-        vnDate.getSeconds().toString().padStart(2, "0");
+    // Dùng thời gian UTC để tính chữ ký (để kiểm tra)
+    const createDate = date.getUTCFullYear().toString() +
+        (date.getUTCMonth() + 1).toString().padStart(2, "0") +
+        date.getUTCDate().toString().padStart(2, "0") +
+        date.getUTCHours().toString().padStart(2, "0") +
+        date.getUTCMinutes().toString().padStart(2, "0") +
+        date.getUTCSeconds().toString().padStart(2, "0");
 
-    // Thêm vnp_ExpireDate (hết hạn sau 15 phút)
-    const expireDate = new Date(vnDate.getTime() + 15 * 60 * 1000); // +15 phút
-    const vnp_ExpireDate = expireDate.getFullYear().toString() +
-        (expireDate.getMonth() + 1).toString().padStart(2, "0") +
-        expireDate.getDate().toString().padStart(2, "0") +
-        expireDate.getHours().toString().padStart(2, "0") +
-        expireDate.getMinutes().toString().padStart(2, "0") +
-        expireDate.getSeconds().toString().padStart(2, "0");
+    const expireDate = new Date(date.getTime() + 15 * 60 * 1000);
+    const vnp_ExpireDate = expireDate.getUTCFullYear().toString() +
+        (expireDate.getUTCMonth() + 1).toString().padStart(2, "0") +
+        expireDate.getUTCDate().toString().padStart(2, "0") +
+        expireDate.getUTCHours().toString().padStart(2, "0") +
+        expireDate.getUTCMinutes().toString().padStart(2, "0") +
+        expireDate.getUTCSeconds().toString().padStart(2, "0");
 
-    console.log("🔹 vnp_CreateDate:", createDate);
-    console.log("🔹 vnp_ExpireDate:", vnp_ExpireDate);
+    console.log("🔹 vnp_CreateDate (UTC):", createDate);
+    console.log("🔹 vnp_ExpireDate (UTC):", vnp_ExpireDate);
 
     const ipAddr = req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "127.0.0.1";
     const vnp_IpAddr = ipAddr.includes(",") ? ipAddr.split(",")[0].trim() : ipAddr;
