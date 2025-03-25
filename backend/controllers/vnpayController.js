@@ -1,6 +1,5 @@
 const qs = require("qs");
 const crypto = require("crypto");
-const fetch = require("node-fetch");
 
 const vnp_TmnCode = process.env.VNP_TMNCODE;
 const vnp_HashSecret = process.env.VNP_HASHSECRET;
@@ -10,6 +9,7 @@ const vnp_ReturnUrl = process.env.VNP_RETURN_URL;
 // Hàm lấy thời gian từ API
 const getServerTime = async () => {
     try {
+        const fetch = (await import("node-fetch")).default; // Dynamic import
         const response = await fetch("http://worldtimeapi.org/api/timezone/Asia/Ho_Chi_Minh");
         const data = await response.json();
         return new Date(data.datetime);
