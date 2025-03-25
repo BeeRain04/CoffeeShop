@@ -39,15 +39,17 @@ const createPayment = async (req, res) => {
     console.log("🔹 Server time (UTC):", date.toISOString());
     console.log("🔹 VN time (UTC+7):", date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }));
 
-    const createDate = date.getFullYear().toString() +
-        (date.getMonth() + 1).toString().padStart(2, "0") +
-        date.getDate().toString().padStart(2, "0") +
-        date.getHours().toString().padStart(2, "0") +
-        date.getMinutes().toString().padStart(2, "0") +
-        date.getSeconds().toString().padStart(2, "0");
+    // Điều chỉnh thời gian theo giờ Việt Nam (UTC+7)
+    const vnDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+    const createDate = vnDate.getFullYear().toString() +
+        (vnDate.getMonth() + 1).toString().padStart(2, "0") +
+        vnDate.getDate().toString().padStart(2, "0") +
+        vnDate.getHours().toString().padStart(2, "0") +
+        vnDate.getMinutes().toString().padStart(2, "0") +
+        vnDate.getSeconds().toString().padStart(2, "0");
 
     // Thêm vnp_ExpireDate (hết hạn sau 15 phút)
-    const expireDate = new Date(date.getTime() + 15 * 60 * 1000); // +15 phút
+    const expireDate = new Date(vnDate.getTime() + 15 * 60 * 1000); // +15 phút
     const vnp_ExpireDate = expireDate.getFullYear().toString() +
         (expireDate.getMonth() + 1).toString().padStart(2, "0") +
         expireDate.getDate().toString().padStart(2, "0") +
