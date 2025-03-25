@@ -40,23 +40,7 @@ const createPayment = async (req, res) => {
     console.log("🔹 Server time (UTC):", date.toISOString());
     console.log("🔹 VN time (UTC+7):", date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }));
 
-    // Thời gian UTC để tính chữ ký
-    const createDateForHash = date.getUTCFullYear().toString() +
-        (date.getUTCMonth() + 1).toString().padStart(2, "0") +
-        date.getUTCDate().toString().padStart(2, "0") +
-        date.getUTCHours().toString().padStart(2, "0") +
-        date.getUTCMinutes().toString().padStart(2, "0") +
-        date.getUTCSeconds().toString().padStart(2, "0");
-
-    const expireDateForHash = new Date(date.getTime() + 15 * 60 * 1000);
-    const vnp_ExpireDateForHash = expireDateForHash.getUTCFullYear().toString() +
-        (expireDateForHash.getUTCMonth() + 1).toString().padStart(2, "0") +
-        expireDateForHash.getUTCDate().toString().padStart(2, "0") +
-        expireDateForHash.getUTCHours().toString().padStart(2, "0") +
-        expireDateForHash.getUTCMinutes().toString().padStart(2, "0") +
-        expireDateForHash.getUTCSeconds().toString().padStart(2, "0");
-
-    // Thời gian giờ Việt Nam (UTC+7) để gửi trong vnp_Params
+    // Thời gian giờ Việt Nam (UTC+7) để gửi trong vnp_Params và tính chữ ký
     const vnDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
     const createDate = vnDate.getFullYear().toString() +
         (vnDate.getMonth() + 1).toString().padStart(2, "0") +
@@ -73,10 +57,8 @@ const createPayment = async (req, res) => {
         expireDate.getMinutes().toString().padStart(2, "0") +
         expireDate.getSeconds().toString().padStart(2, "0");
 
-    console.log("🔹 vnp_CreateDate (UTC, for hash):", createDateForHash);
-    console.log("🔹 vnp_ExpireDate (UTC, for hash):", vnp_ExpireDateForHash);
-    console.log("🔹 vnp_CreateDate (VN time, for params):", createDate);
-    console.log("🔹 vnp_ExpireDate (VN time, for params):", vnp_ExpireDate);
+    console.log("🔹 vnp_CreateDate (VN time):", createDate);
+    console.log("🔹 vnp_ExpireDate (VN time):", vnp_ExpireDate);
 
     const ipAddr = req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "127.0.0.1";
     const vnp_IpAddr = ipAddr.includes(",") ? ipAddr.split(",")[0].trim() : ipAddr;
@@ -97,24 +79,19 @@ const createPayment = async (req, res) => {
         "vnp_IpAddr": vnp_IpAddr
     };
 
-    // Tạo một bản sao của vnp_Params để tính chữ ký, dùng thời gian UTC
-    let vnp_ParamsForHash = { ...vnp_Params };
-    vnp_ParamsForHash["vnp_CreateDate"] = createDateForHash; // Dùng UTC để tính chữ ký
-    vnp_ParamsForHash["vnp_ExpireDate"] = vnp_ExpireDateForHash; // Dùng UTC để tính chữ ký
-
     // Xóa các tham số không cần thiết trước khi ký
-    delete vnp_ParamsForHash["vnp_SecureHash"];
-    delete vnp_ParamsForHash["vnp_SecureHashType"];
+    delete vnp_Params["vnp_SecureHash"];
+    delete vnp_Params["vnp_SecureHashType"];
 
     // Sắp xếp tham số theo thứ tự a-z
-    const sortedParams = Object.keys(vnp_ParamsForHash).sort().reduce((acc, key) => {
-        acc[key] = vnp_ParamsForHash[key];
+    const SortedParams = Object.keys(vnp_Params).sort().reduce((acc, key) => {
+        acc[key] = vnp_Params[key];
         return acc;
     }, {});
 
     // Tạo query string để ký, mã hóa URL các giá trị
-    const queryString = qs.stringify(sortedParams, { encode: true });
-    console.log("🔹 Query string để ký (đã mã hóa URL, dùng UTC):", queryString);
+    const queryString = qs.stringify(SortedParams, { encode: true });
+    console.log("🔹 Query string để ký (đã mã hóa URL, dùng VN time):", queryString);
 
     // Tạo chữ ký SHA512
     const secureHash = crypto.createHmac("sha512", vnp_HashSecret)
